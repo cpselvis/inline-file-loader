@@ -1,5 +1,6 @@
 import path from 'path';
 
+import mime from 'mime';
 import loaderUtils from 'loader-utils';
 import validateOptions from 'schema-utils';
 
@@ -12,6 +13,22 @@ export default function loader(content) {
     name: 'File Loader',
     baseDataPath: 'options',
   });
+
+  const hasInlineFlag = /\?__inline$/.test(this.resource);
+
+  if (hasInlineFlag) {
+    const file = this.resourcePath;
+    // Get MIME type
+    const mimetype = options.mimetype || mime.getType(file);
+
+    if (typeof content === 'string') {
+      content = Buffer.from(content);
+    }
+
+    return `module.exports = ${JSON.stringify(
+      `data:${mimetype || ''};base64,${content.toString('base64')}`
+    )}`;
+  }
 
   const context = options.context || this.rootContext;
 
